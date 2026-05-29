@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiasLens — Was Your Rejection Discriminatory?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a;
+    --white: #f5f0e8;
+    --red: #e84747;
+    --green: #47e87a;
+    --grey: #1a1a1a;
+    --mid: #555;
+    --border: #2a2a2a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--black); color: var(--white); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  header {
+    padding: 1.5rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+  .logo { font-size: 1rem; font-weight: 800; letter-spacing: 0.3em; color: var(--red); }
+  .stats { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--mid); text-align: right; line-height: 1.8; }
+  .stats span { color: var(--white); }
+
+  .hero { padding: 5rem 2.5rem 3rem; max-width: 800px; }
+  .hero-tag {
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    letter-spacing: 0.2em; color: var(--red); margin-bottom: 1.5rem;
+    opacity: 0; animation: fadeUp 0.5s 0.1s forwards;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800;
+    line-height: 1.05; letter-spacing: -0.02em;
+    opacity: 0; animation: fadeUp 0.5s 0.2s forwards;
+  }
+  .hero h1 em { font-style: normal; color: var(--red); }
+  .hero-sub {
+    margin-top: 1.5rem; font-size: 1rem; color: var(--mid);
+    line-height: 1.7; max-width: 480px;
+    opacity: 0; animation: fadeUp 0.5s 0.3s forwards;
+  }
+
+  .form-wrap {
+    padding: 0 2.5rem 3rem; max-width: 800px;
+    opacity: 0; animation: fadeUp 0.5s 0.4s forwards;
+  }
+  .field { margin-bottom: 1px; }
+  .field-label {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    letter-spacing: 0.2em; color: var(--mid);
+    padding: 0.8rem 1.5rem 0.5rem;
+    background: var(--grey); display: block;
+  }
+  .field input, .field textarea {
+    width: 100%; background: var(--grey); border: none;
+    border-bottom: 2px solid var(--border);
+    color: var(--white); font-family: 'Syne', sans-serif;
+    font-size: 1rem; padding: 0.8rem 1.5rem 1rem;
+    outline: none; transition: border-color 0.2s;
+  }
+  .field input:focus, .field textarea:focus { border-bottom-color: var(--red); }
+  .field input::placeholder, .field textarea::placeholder { color: #444; font-weight: 400; }
+  .field textarea { min-height: 160px; resize: none; line-height: 1.7; }
+  .field-hint {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    color: var(--mid); padding: 0.5rem 1.5rem 0.8rem;
+    background: var(--grey); display: block;
+  }
+
+  .btn-scan {
+    width: 100%; background: var(--red); color: var(--white);
+    border: none; padding: 1.3rem;
+    font-family: 'Syne', sans-serif; font-size: 1rem;
+    font-weight: 800; letter-spacing: 0.1em;
+    cursor: pointer; transition: background 0.2s; margin-top: 1px;
+  }
+  .btn-scan:hover { background: #ff5555; }
+  .btn-scan:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .disclaimer {
+    font-family: 'DM Mono', monospace; font-size: 0.6rem;
+    color: var(--mid); padding: 1rem 2.5rem 3rem;
+    max-width: 800px; line-height: 1.8;
+  }
+
+  /* Scanning overlay */
+  #scanning {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,10,10,0.97); z-index: 100;
+    align-items: center; justify-content: center;
+    flex-direction: column; gap: 2rem;
+  }
+  .scan-text {
+    font-family: 'DM Mono', monospace; font-size: 0.75rem;
+    letter-spacing: 0.3em; color: var(--red);
+    animation: pulse 1s infinite;
+  }
+  .scan-steps {
+    font-family: 'DM Mono', monospace; font-size: 0.65rem;
+    color: var(--mid); text-align: center; line-height: 2.5;
+  }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  @media (max-width: 600px) {
+    header { padding: 1rem 1.5rem; }
+    .hero { padding: 3rem 1.5rem 2rem; }
+    .form-wrap { padding: 0 1.5rem 3rem; }
+    .disclaimer { padding: 1rem 1.5rem 2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BIASLENS</div>
+  <div class="stats">
+    <div><span id="stat-scans">—</span> rejections scanned</div>
+    <div><span id="stat-flagged">—</span> patterns detected</div>
+  </div>
+</header>
+
+<section class="hero">
+  <div class="hero-tag">// FREE · ANONYMOUS · US EMPLOYMENT LAW</div>
+  <h1>They decided<br>before you walked<br>in the <em>door.</em></h1>
+  <p class="hero-sub">Paste your rejection. We scan it against documented discrimination patterns in 30 seconds. Free. No account needed.</p>
+</section>
+
+<div class="form-wrap">
+  <div class="field">
+    <label class="field-label" for="job-title">// WHAT JOB DID YOU APPLY FOR?</label>
+    <input type="text" id="job-title" placeholder="e.g. Software Engineer, Sales Manager, Teacher..." maxlength="100">
+  </div>
+  <div class="field">
+    <label class="field-label" for="rejection-text">// PASTE YOUR REJECTION OR DESCRIBE WHAT HAPPENED</label>
+    <textarea id="rejection-text" placeholder="Paste the rejection email, or describe what happened during the hiring process. The more detail, the more accurate the scan." maxlength="3000"></textarea>
+    <span class="field-hint">// Your rejection text is never stored with identifying information</span>
+  </div>
+  <button class="btn-scan" id="btn-scan" onclick="startScan()">
+    SCAN FOR DISCRIMINATION PATTERNS →
+  </button>
+</div>
+
+<div class="disclaimer">
+  // BiasLens identifies potential discrimination patterns only. This is not legal advice and does not constitute a legal determination. Always consult a qualified employment attorney before taking legal action. BiasLens is not a law firm.
+</div>
+
+<div id="scanning">
+  <div class="scan-text">// SCANNING YOUR REJECTION</div>
+  <div class="scan-steps">
+    <div id="step1">Analysing language patterns...</div>
+    <div id="step2">Cross-referencing EEOC case database...</div>
+    <div id="step3">Checking Title VII indicators...</div>
+    <div id="step4">Generating your report...</div>
+  </div>
+</div>
+
+<script>
+async function loadStats() {
+  try {
+    const r = await fetch('/api/stats');
+    const d = await r.json();
+    document.getElementById('stat-scans').textContent = d.total_scans.toLocaleString();
+    document.getElementById('stat-flagged').textContent = d.patterns_found.toLocaleString();
+  } catch(e) {}
+}
+loadStats();
+
+function animateSteps() {
+  const steps = ['step1','step2','step3','step4'];
+  let i = 0;
+  const iv = setInterval(() => {
+    if (i > 0) document.getElementById(steps[i-1]).style.color = '#555';
+    if (i < steps.length) { document.getElementById(steps[i]).style.color = '#f5f0e8'; i++; }
+    else clearInterval(iv);
+  }, 800);
+}
+
+async function startScan() {
+  const jobTitle = document.getElementById('job-title').value.trim();
+  const rejectionText = document.getElementById('rejection-text').value.trim();
+  if (!jobTitle || rejectionText.length < 20) {
+    alert('Please fill in both fields. More detail = more accurate scan.');
+    return;
+  }
+  document.getElementById('scanning').style.display = 'flex';
+  document.getElementById('btn-scan').disabled = true;
+  animateSteps();
+  try {
+    const res = await fetch('/api/scan', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ rejection_text: rejectionText, job_title: jobTitle })
+    });
+    const result = await res.json();
+    localStorage.setItem('biaslens_result', JSON.stringify(result));
+    localStorage.setItem('biaslens_job', jobTitle);
+    window.location.href = '/result';
+  } catch(e) {
+    document.getElementById('scanning').style.display = 'none';
+    document.getElementById('btn-scan').disabled = false;
+    alert('Something went wrong. Please try again.');
+  }
+}
+</script>
+</body>
+</html>
