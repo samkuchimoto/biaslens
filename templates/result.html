@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BiasLens — Your Scan Result</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --black: #0a0a0a; --white: #f5f0e8; --red: #e84747;
+    --green: #47e87a; --yellow: #e8c547; --grey: #1a1a1a;
+    --mid: #555; --border: #2a2a2a;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: var(--black); color: var(--white); font-family: 'Syne', sans-serif; min-height: 100vh; }
+
+  header { padding: 1.5rem 2.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+  .logo { font-size: 1rem; font-weight: 800; letter-spacing: 0.3em; color: var(--red); }
+  .back { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--mid); text-decoration: none; }
+  .back:hover { color: var(--white); }
+
+  .wrap { max-width: 700px; margin: 0 auto; padding: 3rem 2.5rem 5rem; }
+
+  .verdict-card { padding: 3rem; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.1s forwards; }
+  .verdict-card.red { background: #1a0a0a; border-left: 4px solid var(--red); }
+  .verdict-card.green { background: #0a1a0a; border-left: 4px solid var(--green); }
+  .verdict-card.yellow { background: #1a1600; border-left: 4px solid var(--yellow); }
+
+  .verdict-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.25em; margin-bottom: 1rem; }
+  .verdict-label.red { color: var(--red); }
+  .verdict-label.green { color: var(--green); }
+  .verdict-label.yellow { color: var(--yellow); }
+
+  .verdict-headline { font-size: clamp(2.5rem, 6vw, 4rem); font-weight: 800; line-height: 1; letter-spacing: -0.02em; margin-bottom: 0.8rem; }
+  .verdict-headline.red { color: var(--red); }
+  .verdict-headline.green { color: var(--green); }
+  .verdict-headline.yellow { color: var(--yellow); }
+
+  .verdict-sub { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--mid); }
+
+  .block { background: var(--grey); padding: 1.5rem; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.2s forwards; }
+  .block-label { font-family: 'DM Mono', monospace; font-size: 0.6rem; letter-spacing: 0.2em; color: var(--mid); margin-bottom: 0.8rem; }
+  .block-text { font-size: 0.9rem; line-height: 1.7; }
+
+  .pattern-item { display: flex; gap: 1rem; align-items: flex-start; padding: 0.6rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; line-height: 1.5; }
+  .pattern-item:last-child { border-bottom: none; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--red); flex-shrink: 0; margin-top: 0.45rem; }
+
+  .keyphrase { background: #1a0a0a; border: 1px solid var(--red); padding: 1.5rem; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.3s forwards; }
+  .keyphrase-text { font-size: 1.05rem; font-style: italic; color: var(--red); font-weight: 700; }
+
+  .nextstep { background: var(--grey); border-left: 3px solid var(--yellow); padding: 1.5rem; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.35s forwards; }
+
+  .eeoc { background: var(--red); padding: 2rem 1.5rem; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.4s forwards; }
+  .eeoc h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 0.5rem; }
+  .eeoc p { font-size: 0.85rem; color: rgba(245,240,232,0.7); margin-bottom: 1.2rem; line-height: 1.6; }
+  .btn-eeoc { display: inline-block; background: var(--white); color: var(--red); padding: 0.8rem 2rem; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.85rem; text-decoration: none; transition: all 0.2s; }
+  .btn-eeoc:hover { background: var(--black); color: var(--white); }
+
+  .email-box { background: var(--grey); padding: 1.5rem; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.45s forwards; }
+  .email-box p { font-size: 0.9rem; font-weight: 700; margin-bottom: 1rem; }
+  .email-row { display: flex; gap: 1px; margin-bottom: 0.8rem; }
+  .email-input { flex: 1; background: #111; border: 1px solid var(--border); color: var(--white); font-family: 'Syne', sans-serif; font-size: 0.9rem; padding: 0.8rem 1rem; outline: none; }
+  .email-input:focus { border-color: var(--red); }
+  .email-input::placeholder { color: #444; }
+  .btn-notify { background: var(--white); color: var(--black); border: none; padding: 0.8rem 1.5rem; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.8rem; cursor: pointer; white-space: nowrap; }
+  .btn-notify:hover { background: var(--red); color: var(--white); }
+  .consent { display: flex; gap: 0.5rem; font-family: 'DM Mono', monospace; font-size: 0.6rem; color: var(--mid); line-height: 1.5; cursor: pointer; }
+  .consent a { color: var(--mid); }
+  .success { display: none; font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--green); margin-top: 0.8rem; }
+
+  .actions { display: flex; gap: 1px; margin-bottom: 1px; opacity: 0; animation: fadeUp 0.5s 0.5s forwards; }
+  .btn-action { flex: 1; background: var(--grey); border: none; padding: 1rem; color: var(--white); font-family: 'Syne', sans-serif; font-size: 0.8rem; font-weight: 700; cursor: pointer; text-align: center; transition: background 0.2s; }
+  .btn-action:hover { background: #2a2a2a; }
+
+  .disclaimer { font-family: 'DM Mono', monospace; font-size: 0.55rem; color: var(--mid); margin-top: 2rem; line-height: 1.8; opacity: 0; animation: fadeUp 0.5s 0.6s forwards; }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 600px) {
+    .wrap { padding: 2rem 1.5rem 3rem; }
+    header { padding: 1rem 1.5rem; }
+    .verdict-card { padding: 2rem; }
+    .email-row { flex-direction: column; }
+    .actions { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">BIASLENS</div>
+  <a class="back" href="/">← SCAN ANOTHER</a>
+</header>
+
+<div class="wrap" id="wrap"></div>
+
+<script>
+const result = JSON.parse(localStorage.getItem('biaslens_result') || 'null');
+const job = localStorage.getItem('biaslens_job') || 'Unknown position';
+if (!result) { window.location.href = '/'; }
+
+const color = result.verdict === 'patterns_found' ? 'red' : result.verdict === 'insufficient_information' ? 'yellow' : 'green';
+const headlines = { patterns_found: { high: 'Patterns Found.', medium: 'Suspicious.', low: 'Worth Investigating.' }, insufficient_information: 'Need More Info.', no_clear_patterns: 'No Clear Patterns.' };
+const headline = result.verdict === 'patterns_found' ? (headlines.patterns_found[result.risk_level] || 'Patterns Found.') : headlines[result.verdict];
+
+let html = `
+<div class="verdict-card ${color}">
+  <div class="verdict-label ${color}">// SCAN RESULT — ${job.toUpperCase()}</div>
+  <div class="verdict-headline ${color}">${headline}</div>
+  <div class="verdict-sub">RISK: ${(result.risk_level||'none').toUpperCase()}${result.eeoc_category && result.eeoc_category !== 'none' ? ' · ' + result.eeoc_category.toUpperCase() : ''}</div>
+</div>
+
+<div class="block">
+  <div class="block-label">// WHAT WE FOUND</div>
+  <div class="block-text">${result.explanation}</div>
+</div>`;
+
+if (result.patterns_detected && result.patterns_detected.length > 0) {
+  html += `<div class="block"><div class="block-label">// PATTERNS DETECTED</div>${result.patterns_detected.map(p => `<div class="pattern-item"><div class="dot"></div><div>${p}</div></div>`).join('')}</div>`;
+}
+
+if (result.key_phrase) {
+  html += `<div class="keyphrase"><div class="block-label" style="color:var(--red)">// FLAGGED LANGUAGE</div><div class="keyphrase-text">"${result.key_phrase}"</div></div>`;
+}
+
+html += `<div class="nextstep"><div class="block-label">// YOUR NEXT STEP</div><div class="block-text">${result.next_step}</div></div>`;
+
+if (result.verdict === 'patterns_found') {
+  html += `<div class="eeoc"><h3>You may have grounds to file a charge.</h3><p>The EEOC enforces US employment discrimination law. Filing is free. You have 180–300 days from the act to file.</p><a class="btn-eeoc" href="https://www.eeoc.gov/filing-charge-discrimination" target="_blank">FILE WITH EEOC →</a></div>`;
+}
+
+html += `
+<div class="email-box">
+  <p>Stay informed about your rights.</p>
+  <div class="email-row">
+    <input class="email-input" type="email" id="email-input" placeholder="your@email.com">
+    <button class="btn-notify" onclick="saveEmail()">NOTIFY ME →</button>
+  </div>
+  <label class="consent">
+    <input type="checkbox" id="consent" style="flex-shrink:0;margin-top:2px;">
+    I agree to store my email for updates. <a href="/privacy">Privacy policy.</a>
+  </label>
+  <div class="success" id="success">// SAVED. WE'LL KEEP YOU INFORMED.</div>
+</div>
+
+<div class="actions">
+  <button class="btn-action" onclick="shareResult()">SHARE YOUR RESULT</button>
+  <button class="btn-action" onclick="window.location.href='/'">SCAN ANOTHER</button>
+</div>
+
+<div class="disclaimer">// BiasLens identifies potential patterns only. Not legal advice. Not a legal determination. Consult a qualified employment attorney before taking action. BiasLens is not a law firm.</div>`;
+
+document.getElementById('wrap').innerHTML = html;
+
+async function saveEmail() {
+  const email = document.getElementById('email-input').value.trim();
+  const consent = document.getElementById('consent').checked;
+  if (!email || !consent) { alert('Please enter your email and check the consent box.'); return; }
+  try {
+    await fetch('/api/subscribe', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ email, scan_id: result.scan_id || '' })
+    });
+    document.getElementById('success').style.display = 'block';
+  } catch(e) {}
+}
+
+function shareResult() {
+  const text = result.verdict === 'patterns_found'
+    ? `BiasLens flagged my job rejection for potential ${result.eeoc_category} discrimination.\n\nFree scan — no account needed:\nbiaslens.vercel.app`
+    : `I just scanned my job rejection with BiasLens. Free scan:\nbiaslens.vercel.app`;
+  if (navigator.share) { navigator.share({ title: 'BiasLens Result', text }); }
+  else { navigator.clipboard.writeText(text).then(() => alert('Copied. Share it anywhere.')); }
+}
+</script>
+</body>
+</html>
