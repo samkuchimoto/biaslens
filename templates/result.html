@@ -169,7 +169,14 @@ async function saveEmail() {
     await fetch('/api/subscribe', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ email, scan_id: result.scan_id || '' })
+      body: JSON.stringify({
+        email,
+        scan_id: result.scan_id || '',
+        verdict: result.verdict || '',
+        risk_level: result.risk_level || '',
+        eeoc_category: result.eeoc_category || '',
+        job_title: job
+      })
     });
     document.getElementById('success').style.display = 'block';
   } catch(e) {}
