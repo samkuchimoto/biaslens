@@ -133,7 +133,7 @@ if (result.verdict === 'patterns_found') {
 
 html += `
 <div class="email-box">
-  <p>Stay informed about your rights.</p>
+  <p>Get notified when we add new features.</p>
   <div class="email-row">
     <input class="email-input" type="email" id="email-input" placeholder="your@email.com">
     <button class="btn-notify" onclick="saveEmail()">NOTIFY ME →</button>
@@ -142,14 +142,18 @@ html += `
     <input type="checkbox" id="consent" style="flex-shrink:0;margin-top:2px;">
     I agree to store my email for updates. <a href="/privacy">Privacy policy.</a>
   </label>
-  <div class="success" id="success">// SAVED. WE'LL KEEP YOU INFORMED.</div>
+  <div class="success" id="success">// EMAIL SAVED. WE'LL NOTIFY YOU OF UPDATES.</div>
 </div>
 
 <div class="actions">
   <button class="btn-action" style="background:var(--red);color:var(--white);font-weight:800;letter-spacing:0.08em;" onclick="window.location.href='/verdict'">GET YOUR BIAS VERDICT CARD →</button>
 </div>
 <div class="actions" style="margin-top:1px;">
-  <button class="btn-action" onclick="shareResult()">SHARE TEXT</button>
+  <button class="btn-action" onclick="shareGmail()">GMAIL</button>
+  <button class="btn-action" onclick="shareOutlook()">OUTLOOK</button>
+  <button class="btn-action" id="btn-copy-share" onclick="shareCopy()">COPY TEXT</button>
+</div>
+<div class="actions" style="margin-top:1px;">
   <button class="btn-action" onclick="window.location.href='/'">SCAN ANOTHER</button>
 </div>
 
@@ -171,12 +175,30 @@ async function saveEmail() {
   } catch(e) {}
 }
 
-function shareResult() {
-  const text = result.verdict === 'patterns_found'
-    ? `BiasLens flagged my job rejection for potential ${result.eeoc_category} discrimination.\n\nFree scan — no account needed:\nbiaslens.vercel.app`
-    : `I just scanned my job rejection with BiasLens. Free scan:\nbiaslens.vercel.app`;
-  if (navigator.share) { navigator.share({ title: 'BiasLens Result', text }); }
-  else { navigator.clipboard.writeText(text).then(() => alert('Copied. Share it anywhere.')); }
+function buildShareText() {
+  return result.verdict === 'patterns_found'
+    ? `BiasLens flagged my job rejection for potential ${result.eeoc_category} discrimination.\n\nFree scan — no account needed:\nbiaslens-justice.vercel.app`
+    : `I just scanned my job rejection with BiasLens. Free scan:\nbiaslens-justice.vercel.app`;
+}
+
+function shareGmail() {
+  const subject = encodeURIComponent('BiasLens — My Scan Result');
+  const body    = encodeURIComponent(buildShareText());
+  window.open(`https://mail.google.com/mail/?view=cm&su=${subject}&body=${body}`, '_blank');
+}
+
+function shareOutlook() {
+  const subject = encodeURIComponent('BiasLens — My Scan Result');
+  const body    = encodeURIComponent(buildShareText());
+  window.open(`https://outlook.live.com/mail/0/deeplink/compose?subject=${subject}&body=${body}`, '_blank');
+}
+
+function shareCopy() {
+  navigator.clipboard.writeText(buildShareText()).then(() => {
+    const btn = document.getElementById('btn-copy-share');
+    btn.textContent = '✓ COPIED!';
+    setTimeout(() => { btn.textContent = 'COPY TEXT'; }, 2000);
+  });
 }
 </script>
 </body>
