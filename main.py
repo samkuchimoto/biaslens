@@ -18,6 +18,7 @@ templates = Jinja2Templates(directory="templates")
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+RESEND_API_KEY = os.getenv("RESEND_API_KEY")
 
 groq_client = Groq(api_key=GROQ_API_KEY)
 
@@ -35,6 +36,10 @@ class ScanRequest(BaseModel):
 class SubscribeRequest(BaseModel):
     email: str
     scan_id: str
+    verdict: str = ""
+    risk_level: str = ""
+    eeoc_category: str = ""
+    job_title: str = ""
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
@@ -91,16 +96,13 @@ Return ONLY valid JSON with no extra text, no markdown, no code fences:
     )
 
     raw = response.choices[0].message.content
-    # Robust JSON extraction — strip fences, find first { ... }
     clean = raw.replace("```json", "").replace("```", "").strip()
-    # Extract JSON object in case model adds preamble text
     start = clean.find("{")
     end   = clean.rfind("}") + 1
     if start != -1 and end > start:
         clean = clean[start:end]
     result = json.loads(clean)
 
-    # Insert to Supabase via httpx (avoids SyncHttp issue)
     scan_id = None
     try:
         async with httpx.AsyncClient() as client:
@@ -121,13 +123,14 @@ Return ONLY valid JSON with no extra text, no markdown, no code fences:
                 if records:
                     scan_id = records[0].get("id")
     except Exception:
-        pass  # Don't fail the scan if DB write fails
+        pass
 
     result["scan_id"] = scan_id
     return result
 
 @app.post("/api/subscribe")
 async def subscribe(data: SubscribeRequest):
+    # Save to Supabase
     try:
         async with httpx.AsyncClient() as client:
             await client.post(
@@ -141,6 +144,122 @@ async def subscribe(data: SubscribeRequest):
             )
     except Exception:
         pass
+
+    # Send confirmation email via Resend
+    if RESEND_API_KEY:
+        try:
+            # Build a nice verdict summary for the email
+            verdict_label = {
+                "patterns_found": "⚠️ Discrimination Patterns Found",
+                "no_clear_patterns": "✅ No Clear Patterns Found",
+                "insufficient_information": "❓ Insufficient Information"
+            }.get(data.verdict, "Scan Complete")
+
+            risk_color = {
+                "high": "#e84747",
+                "medium": "#ff6b2b",
+                "low": "#e8c547",
+                "none": "#47e87a"
+            }.get(data.risk_level, "#555555")
+
+            eeoc_text = f"<br><strong>EEOC Category:</strong> {data.eeoc_category.upper()}" if data.eeoc_category and data.eeoc_category != "none" else ""
+            job_text = f"<br><strong>Job Applied For:</strong> {data.job_title}" if data.job_title else ""
+
+            html_body = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background:#0a0a0a;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#0a0a0a;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="560" cellpadding="0" cellspacing="0" style="max-width:560px;width:100%;">
+
+          <!-- Header -->
+          <tr>
+            <td style="padding:0 0 32px 0;">
+              <span style="font-size:12px;font-weight:800;letter-spacing:0.3em;color:#e84747;font-family:monospace;">BIASLENS</span>
+            </td>
+          </tr>
+
+          <!-- Verdict card block -->
+          <tr>
+            <td style="background:#080808;border-left:5px solid {risk_color};padding:32px 28px;margin-bottom:2px;">
+              <div style="font-size:10px;letter-spacing:0.25em;color:#444;font-family:monospace;margin-bottom:8px;">// YOUR SCAN RESULT</div>
+              <div style="font-size:28px;font-weight:800;color:#f5f0e8;letter-spacing:-0.02em;margin-bottom:16px;">{verdict_label}</div>
+              <div style="font-size:11px;font-family:monospace;color:#888;line-height:1.9;">
+                <strong style="color:#555;">RISK LEVEL:</strong> <span style="color:{risk_color};font-weight:700;">{data.risk_level.upper() if data.risk_level else "N/A"}</span>
+                {job_text}
+                {eeoc_text}
+              </div>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr><td style="height:2px;background:#1a1a1a;"></td></tr>
+
+          <!-- Body -->
+          <tr>
+            <td style="background:#111;padding:28px;">
+              <p style="color:#888;font-size:13px;line-height:1.8;margin:0 0 20px 0;">
+                Your BiasLens scan is saved. We'll notify you when we add new features — including attorney referrals, pattern tracking, and EEOC filing guides.
+              </p>
+              <p style="color:#555;font-size:11px;font-family:monospace;line-height:1.8;margin:0;">
+                Remember: BiasLens identifies potential patterns only. This is not legal advice and does not constitute a legal determination. Always consult a qualified employment attorney before taking action.
+              </p>
+            </td>
+          </tr>
+
+          <!-- CTA -->
+          <tr>
+            <td style="background:#e84747;padding:20px;text-align:center;">
+              <a href="https://biaslens-justice.vercel.app" style="color:#fff;font-size:13px;font-weight:800;letter-spacing:0.15em;text-decoration:none;font-family:monospace;">
+                SCAN ANOTHER REJECTION →
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 0 0 0;">
+              <p style="color:#333;font-size:10px;font-family:monospace;line-height:1.8;margin:0;">
+                // BiasLens · Free · Anonymous · US Employment Law<br>
+                You received this because you subscribed at biaslens-justice.vercel.app<br>
+                Not legal advice. Not a law firm.
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+"""
+
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    "https://api.resend.com/emails",
+                    headers={
+                        "Authorization": f"Bearer {RESEND_API_KEY}",
+                        "Content-Type": "application/json"
+                    },
+                    json={
+                        "from": "BiasLens <onboarding@resend.dev>",
+                        "to": [data.email],
+                        "subject": f"BiasLens — Your Scan Result: {verdict_label}",
+                        "html": html_body
+                    },
+                    timeout=10.0
+                )
+        except Exception as e:
+            print(f"Resend error: {e}")
+            pass
+
     return {"status": "ok"}
 
 @app.get("/api/stats")
@@ -154,7 +273,6 @@ async def stats():
                 headers={**HEADERS, "Prefer": "count=exact"},
                 timeout=10.0
             )
-            # Use eq.patterns_found — only real flags count
             r2 = await client.get(
                 f"{SUPABASE_URL}/rest/v1/scans?select=id&verdict=eq.patterns_found",
                 headers={**HEADERS, "Prefer": "count=exact"},
