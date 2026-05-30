@@ -8,19 +8,21 @@
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <style>
+  /* ── Design tokens — kept in sync with index.html / result.html ── */
   :root {
-    --black: #0a0a0a;
-    --white: #f5f0e8;
-    --red: #e84747;
+    --black:  #0a0a0a;
+    --white:  #f5f0e8;
+    --red:    #e84747;
     --orange: #ff6b2b;
-    --green: #47e87a;
+    --green:  #47e87a;
     --yellow: #e8c547;
-    --grey: #141414;
-    --grey2: #1a1a1a;
-    --mid: #555;
-    --border: #222;
+    --grey:   #1a1a1a;   /* same as index + result */
+    --mid:    #555;
+    --border: #2a2a2a;   /* same as index + result */
   }
+
   * { margin: 0; padding: 0; box-sizing: border-box; }
+
   body {
     background: var(--black);
     color: var(--white);
@@ -28,8 +30,9 @@
     min-height: 100vh;
   }
 
+  /* ── Header — identical to result.html ── */
   header {
-    padding: 1.4rem 2.5rem;
+    padding: 1.5rem 2.5rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -39,17 +42,20 @@
   .back { font-family: 'DM Mono', monospace; font-size: 0.65rem; color: var(--mid); text-decoration: none; transition: color 0.15s; }
   .back:hover { color: var(--white); }
 
-  .page { max-width: 740px; margin: 0 auto; padding: 2.5rem 2rem 5rem; }
+  /* ── Page wrapper ── */
+  .page { max-width: 740px; margin: 0 auto; padding: 2.5rem 2rem 5rem; animation: fadeUp 0.4s ease both; }
 
   .page-label {
-    font-family: 'DM Mono', monospace; font-size: 0.6rem;
-    letter-spacing: 0.25em; color: var(--mid); margin-bottom: 2rem;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    color: var(--mid);
+    margin-bottom: 2rem;
   }
 
-  /* ═══════════════════════════════════════
-     THE CARD — exact viral spec
-     Square 1:1, dark, high-contrast
-  ════════════════════════════════════════ */
+  /* ════════════════════════════════
+     THE CARD — 1:1 square
+  ════════════════════════════════ */
   #verdict-card {
     width: 100%;
     max-width: 600px;
@@ -60,11 +66,9 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
-    /* Left red accent bar */
     border-left: 6px solid var(--red);
   }
 
-  /* Top section — WHO */
   .vc-top {
     padding: 2rem 2.2rem 1.4rem;
     border-bottom: 1px solid #181818;
@@ -95,7 +99,6 @@
     margin-top: 0.5rem;
   }
 
-  /* Center section — PUNCH */
   .vc-center {
     flex: 1;
     display: flex;
@@ -117,9 +120,8 @@
     letter-spacing: -0.04em;
     line-height: 0.85;
     margin-bottom: 0.5rem;
-    /* Color injected by JS */
   }
-  .vc-percentage.red   { color: var(--red); }
+  .vc-percentage.red    { color: var(--red); }
   .vc-percentage.orange { color: var(--orange); }
   .vc-percentage.yellow { color: var(--yellow); }
   .vc-percentage.green  { color: var(--green); }
@@ -133,12 +135,11 @@
     border: 1px solid;
     margin-top: 0.6rem;
   }
-  .vc-risk-badge.red    { color: var(--red); border-color: rgba(232,71,71,0.4); }
+  .vc-risk-badge.red    { color: var(--red);    border-color: rgba(232,71,71,0.4); }
   .vc-risk-badge.orange { color: var(--orange); border-color: rgba(255,107,43,0.4); }
   .vc-risk-badge.yellow { color: var(--yellow); border-color: rgba(232,197,71,0.4); }
-  .vc-risk-badge.green  { color: var(--green); border-color: rgba(71,232,122,0.4); }
+  .vc-risk-badge.green  { color: var(--green);  border-color: rgba(71,232,122,0.4); }
 
-  /* Bottom section — EVIDENCE */
   .vc-bottom {
     padding: 1rem 2.2rem 0.8rem;
     border-top: 1px solid #181818;
@@ -157,14 +158,12 @@
     font-weight: 500;
     letter-spacing: 0.22em;
     text-transform: uppercase;
-    /* Color injected by JS */
   }
   .vc-three-words.red    { color: var(--red); }
   .vc-three-words.orange { color: var(--orange); }
   .vc-three-words.yellow { color: var(--yellow); }
   .vc-three-words.green  { color: var(--green); }
 
-  /* Footer — TRUST */
   .vc-footer {
     padding: 0.7rem 2.2rem 1.4rem;
     display: flex;
@@ -188,7 +187,6 @@
     line-height: 1.6;
   }
 
-  /* Decorative corner grid mark */
   .vc-corner-mark {
     position: absolute;
     bottom: 0; right: 0;
@@ -200,13 +198,14 @@
     background-size: 8px 8px;
   }
 
-  /* ═══════════════════════════════════════
-     CONTROLS
-  ════════════════════════════════════════ */
+  /* ════════════════════════════════
+     CONTROLS — same field style as index.html
+  ════════════════════════════════ */
   .controls { margin-bottom: 0.5rem; }
 
   .ctrl-row { display: flex; gap: 1px; margin-bottom: 1px; }
-  .ctrl-field { flex: 1; background: var(--grey2); }
+  .ctrl-field { flex: 1; background: var(--grey); }
+
   .ctrl-label {
     display: block;
     font-family: 'DM Mono', monospace;
@@ -231,29 +230,13 @@
   .ctrl-input:focus { border-bottom-color: var(--red); }
   .ctrl-input::placeholder { color: #2a2a2a; font-weight: 400; }
 
-  .ctrl-select {
-    width: 100%;
-    background: transparent;
-    border: none;
-    border-bottom: 2px solid var(--border);
-    color: var(--white);
-    font-family: 'DM Mono', monospace;
-    font-size: 0.75rem;
-    padding: 0.3rem 1.2rem 0.8rem;
-    outline: none;
-    cursor: pointer;
-    appearance: none;
-    -webkit-appearance: none;
-  }
-  .ctrl-select option { background: #1a1a1a; color: var(--white); }
-
-  /* ═══════════════════════════════════════
-     BUTTONS
-  ════════════════════════════════════════ */
+  /* ════════════════════════════════
+     BUTTONS — consistent with result.html
+  ════════════════════════════════ */
   .btn-row { display: flex; gap: 1px; margin-top: 1px; }
 
   .btn-primary {
-    flex: 2;
+    flex: 1;
     background: var(--red);
     color: var(--white);
     border: none;
@@ -268,21 +251,30 @@
   .btn-primary:hover { background: #ff5555; }
   .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
 
-  .btn-secondary {
-    flex: 1;
-    background: var(--grey2);
-    color: var(--white);
-    border: none;
-    padding: 1.2rem 1rem;
-    font-family: 'Syne', sans-serif;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    cursor: pointer;
-    transition: background 0.15s;
-  }
-  .btn-secondary:hover { background: #222; }
+  /* Share buttons row */
+  .share-row { display: flex; gap: 1px; margin-top: 1px; }
 
+  .btn-share {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    border: none;
+    padding: 0.9rem 1rem;
+    font-family: 'Syne', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-share:hover { opacity: 0.85; }
+  .btn-gmail   { background: #EA4335; color: #fff; }
+  .btn-outlook { background: #0078D4; color: #fff; }
+  .btn-copy    { background: var(--grey); color: var(--white); border: 1px solid var(--border); }
+
+  /* Generating indicator */
   .generating {
     display: none;
     text-align: center;
@@ -294,29 +286,25 @@
     animation: blink 1s infinite;
   }
 
+  /* Hint text — same style as field-hint in index.html */
   .share-hint {
     font-family: 'DM Mono', monospace;
     font-size: 0.58rem;
     letter-spacing: 0.1em;
-    color: #333;
+    color: var(--mid);
     text-align: center;
     margin-top: 1.2rem;
     line-height: 2;
   }
 
-  @keyframes blink { 50% { opacity: 0.25; } }
-  @keyframes fadeUp { from { opacity:0; transform:translateY(14px); } to { opacity:1; transform:translateY(0); } }
-
-  .page { animation: fadeUp 0.4s ease both; }
+  @keyframes blink   { 50% { opacity: 0.25; } }
+  @keyframes fadeUp  { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
 
   @media (max-width: 600px) {
-    header { padding: 1rem 1.2rem; }
-    .page { padding: 1.5rem 1rem 3rem; }
-    .vc-top { padding: 1.4rem 1.4rem 1rem; }
-    .vc-center { padding: 0.5rem 1.4rem; }
-    .vc-bottom { padding: 0.8rem 1.4rem 0.6rem; }
-    .vc-footer { padding: 0.5rem 1.4rem 1rem; }
-    .btn-row { flex-direction: column; }
+    header { padding: 1rem 1.5rem; }
+    .page  { padding: 2rem 1.5rem 3rem; }
+    .share-row { flex-direction: column; }
+    .btn-row   { flex-direction: column; }
   }
 </style>
 </head>
@@ -330,30 +318,25 @@
 <div class="page">
   <div class="page-label">// STEP 1 — CUSTOMIZE YOUR CARD &nbsp;&nbsp; STEP 2 — DOWNLOAD &nbsp;&nbsp; STEP 3 — SHARE ON LINKEDIN / X</div>
 
-  <!-- ████  THE VERDICT CARD  ████ -->
+  <!-- THE VERDICT CARD -->
   <div id="verdict-card">
-
-    <!-- TOP: WHO -->
     <div class="vc-top">
       <div class="vc-scan-label">// COMPANY SCANNED</div>
       <div class="vc-company placeholder" id="vc-company">ADD COMPANY NAME</div>
       <div class="vc-job" id="vc-job"></div>
     </div>
 
-    <!-- CENTER: PUNCH -->
     <div class="vc-center">
       <div class="vc-pct-label">// BIAS RISK SCORE</div>
       <div class="vc-percentage red" id="vc-pct">—%</div>
       <div class="vc-risk-badge red" id="vc-badge">CALCULATING...</div>
     </div>
 
-    <!-- BOTTOM: EVIDENCE -->
     <div class="vc-bottom">
       <div class="vc-evidence-label">// VERDICT</div>
       <div class="vc-three-words red" id="vc-three-words">—</div>
     </div>
 
-    <!-- FOOTER: TRUST -->
     <div class="vc-footer">
       <div class="vc-source">
         Scanned by BiasLens Justice AI<br>
@@ -367,7 +350,6 @@
 
     <div class="vc-corner-mark"></div>
   </div>
-  <!-- end #verdict-card -->
 
   <!-- CONTROLS -->
   <div class="controls">
@@ -397,26 +379,41 @@
 
   <div id="generating" class="generating">// GENERATING HIGH-RES IMAGE...</div>
 
+  <!-- DOWNLOAD -->
   <div class="btn-row">
     <button class="btn-primary" id="btn-dl" onclick="downloadCard()">
       DOWNLOAD VERDICT CARD (1200×1200) →
     </button>
-    <button class="btn-secondary" onclick="copyShareText()">COPY SHARE TEXT</button>
+  </div>
+
+  <!-- SHARE -->
+  <div class="share-row">
+    <button class="btn-share btn-gmail" onclick="shareGmail()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.548l8.073-6.055C21.69 2.28 24 3.434 24 5.457z"/></svg>
+      GMAIL
+    </button>
+    <button class="btn-share btn-outlook" onclick="shareOutlook()">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.55q0-.44.3-.75.3-.3.75-.3h12.9q.44 0 .75.3.3.3.3.75V12zm-2 0H8.92v1.3q0 .35-.21.62-.2.28-.54.41l-5.28 1.73V9.62h-.77v4.04q0 .2.06.37.06.18.17.31.1.14.25.22.15.08.32.08h.97v2.85l2.5-.82q.1-.03.2-.03h1.55v2.05H22V12z"/></svg>
+      OUTLOOK
+    </button>
+    <button class="btn-share btn-copy" id="btn-copy" onclick="copyText(this)">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      COPY TEXT
+    </button>
   </div>
 
   <div class="share-hint">
-    // Download → post on LinkedIn, X, or Instagram Stories (1:1 square dominates every feed)<br>
-    // No Supabase or Groq changes needed — card reads your existing scan result
+    // Download → post on LinkedIn, X, or Instagram Stories &nbsp;·&nbsp; 1:1 square dominates every feed
   </div>
 </div>
 
 <script>
-/* ─── Load data from existing scan ─── */
+/* ── Load from existing scan (set by result.html) ── */
 const result = JSON.parse(localStorage.getItem('biaslens_result') || 'null');
 const job    = localStorage.getItem('biaslens_job') || '';
 if (!result) { window.location.href = '/'; }
 
-/* ─── Derive color tier from risk ─── */
+/* ── Color tier from risk ── */
 function colorFromRisk(risk, verdict) {
   if (verdict === 'no_clear_patterns')        return 'green';
   if (verdict === 'insufficient_information') return 'yellow';
@@ -426,27 +423,26 @@ function colorFromRisk(risk, verdict) {
   return 'green';
 }
 
-/* ─── Auto bias percentage ─── */
+/* ── Auto bias percentage ── */
 function autoPct(risk, verdict) {
   if (verdict === 'no_clear_patterns')        return '12%';
   if (verdict === 'insufficient_information') return '—%';
-  const map = { high: '91%', medium: '67%', low: '38%', none: '8%' };
-  return map[risk] || '—%';
+  return { high: '91%', medium: '67%', low: '38%', none: '8%' }[risk] || '—%';
 }
 
-/* ─── Auto three-word verdict ─── */
+/* ── Auto three-word verdict ── */
 function autoThreeWords(result) {
   if (result.verdict === 'no_clear_patterns')        return 'NO BIAS DETECTED';
   if (result.verdict === 'insufficient_information') return 'MORE DATA NEEDED';
-  const cat = (result.eeoc_category || '').toLowerCase();
-  const risk = (result.risk_level   || '').toLowerCase();
-  const map = {
-    'age':            'AGE BIAS FLAGGED',
-    'sex':            'GENDER BIAS FLAGGED',
-    'race/color':     'RACIAL BIAS FLAGGED',
-    'disability':     'DISABILITY BIAS FLAGGED',
-    'national origin':'ORIGIN BIAS FLAGGED',
-    'religion':       'RELIGIOUS BIAS FLAGGED',
+  const cat  = (result.eeoc_category || '').toLowerCase();
+  const risk = (result.risk_level    || '').toLowerCase();
+  const map  = {
+    'age':             'AGE BIAS FLAGGED',
+    'sex':             'GENDER BIAS FLAGGED',
+    'race/color':      'RACIAL BIAS FLAGGED',
+    'disability':      'DISABILITY BIAS FLAGGED',
+    'national origin': 'ORIGIN BIAS FLAGGED',
+    'religion':        'RELIGIOUS BIAS FLAGGED',
   };
   if (map[cat]) return map[cat];
   if (risk === 'high')   return 'SYSTEMIC PATTERN FOUND';
@@ -454,32 +450,27 @@ function autoThreeWords(result) {
   return 'ALGORITHMIC EXCLUSION DETECTED';
 }
 
-/* ─── Set color classes on card elements ─── */
+/* ── Apply color class to card elements ── */
 function applyColor(color) {
-  const ids = ['vc-pct','vc-badge','vc-three-words'];
-  ids.forEach(id => {
+  ['vc-pct','vc-badge','vc-three-words'].forEach(id => {
     const el = document.getElementById(id);
-    el.className = el.className.replace(/\b(red|orange|yellow|green)\b/g, '');
+    el.className = el.className.replace(/\b(red|orange|yellow|green)\b/g, '').trim();
     el.classList.add(color);
   });
-  const card = document.getElementById('verdict-card');
   const barColors = { red:'#e84747', orange:'#ff6b2b', yellow:'#e8c547', green:'#47e87a' };
-  card.style.borderLeftColor = barColors[color];
+  document.getElementById('verdict-card').style.borderLeftColor = barColors[color];
 }
 
-/* ─── Main render ─── */
+/* ── Render card ── */
 function renderCard() {
-  const company   = document.getElementById('inp-company').value.trim();
-  const threeInp  = document.getElementById('inp-three').value.trim();
-  const pctInp    = document.getElementById('inp-pct').value.trim();
+  const company    = document.getElementById('inp-company').value.trim();
+  const threeInp   = document.getElementById('inp-three').value.trim();
+  const pctInp     = document.getElementById('inp-pct').value.trim();
+  const color      = colorFromRisk(result.risk_level, result.verdict);
+  const pct        = pctInp    || autoPct(result.risk_level, result.verdict);
+  const threeWords = threeInp  || autoThreeWords(result);
+  const jobLabel   = job ? ('// ' + job.toUpperCase().substring(0, 44)) : '';
 
-  const color     = colorFromRisk(result.risk_level, result.verdict);
-  const pct       = pctInp || autoPct(result.risk_level, result.verdict);
-  const threeWords= threeInp || autoThreeWords(result);
-  const riskLabel = (result.risk_level || 'none').toUpperCase() + ' RISK';
-  const jobLabel  = job ? ('// ' + job.toUpperCase().substring(0,44)) : '';
-
-  /* Company name */
   const companyEl = document.getElementById('vc-company');
   if (company) {
     companyEl.textContent = company.toUpperCase();
@@ -489,37 +480,32 @@ function renderCard() {
     companyEl.classList.add('placeholder');
   }
 
-  document.getElementById('vc-job').textContent     = jobLabel;
-  document.getElementById('vc-pct').textContent     = pct;
-  document.getElementById('vc-badge').textContent   = riskLabel;
+  document.getElementById('vc-job').textContent         = jobLabel;
+  document.getElementById('vc-pct').textContent         = pct;
+  document.getElementById('vc-badge').textContent       = (result.risk_level || 'none').toUpperCase() + ' RISK';
   document.getElementById('vc-three-words').textContent = threeWords;
 
   applyColor(color);
 }
 
-/* ─── Download via html2canvas ─── */
+/* ── Download via html2canvas ── */
 async function downloadCard() {
   const btn = document.getElementById('btn-dl');
   const gen = document.getElementById('generating');
-
   btn.disabled = true;
   gen.style.display = 'block';
-
   await document.fonts.ready;
-  await new Promise(r => setTimeout(r, 200)); // let fonts paint
-
+  await new Promise(r => setTimeout(r, 200));
   const card = document.getElementById('verdict-card');
-
   try {
     const canvas = await html2canvas(card, {
-      scale: 2,                    // → 1200×1200px at 600px card
+      scale: 2,
       useCORS: true,
       backgroundColor: '#080808',
       logging: false,
       width:  card.offsetWidth,
       height: card.offsetHeight,
     });
-
     const a = document.createElement('a');
     a.download = `biaslens-verdict-${Date.now()}.png`;
     a.href = canvas.toDataURL('image/png', 1.0);
@@ -528,53 +514,51 @@ async function downloadCard() {
     alert('Download failed — try right-clicking the card and Save Image As.');
     console.error(e);
   }
-
   btn.disabled = false;
   gen.style.display = 'none';
 }
 
-/* ─── Copy share text ─── */
-function copyShareText() {
+/* ── Build share text ── */
+function buildShareText() {
   const company    = document.getElementById('inp-company').value.trim();
   const threeWords = document.getElementById('vc-three-words').textContent;
   const pct        = document.getElementById('vc-pct').textContent;
   const cat        = result.eeoc_category && result.eeoc_category !== 'none'
                        ? result.eeoc_category : 'employment';
-
-  let text = '';
   if (result.verdict === 'patterns_found') {
-    text =
-`BiasLens just flagged my job rejection for potential ${cat} discrimination.
-
-Verdict: ${threeWords}
-${company ? 'Company: ' + company + '\n' : ''}Bias Risk: ${pct}
-
-Free scan — no account needed:
-biaslens-justice.vercel.app`;
+    return `BiasLens flagged my job rejection for potential ${cat} discrimination.\n\nVerdict: ${threeWords}\n${company ? 'Company: ' + company + '\n' : ''}Bias Risk: ${pct}\n\nFree scan — no account needed:\nbiaslens-justice.vercel.app`;
   } else if (result.verdict === 'no_clear_patterns') {
-    text =
-`I scanned my job rejection with BiasLens AI — no clear discrimination patterns found.
-
-Free scan for every job seeker:
-biaslens-justice.vercel.app`;
-  } else {
-    text =
-`I scanned my job rejection with BiasLens. Inconclusive — need more evidence to determine bias.
-
-Free scan:
-biaslens-justice.vercel.app`;
+    return `I scanned my job rejection with BiasLens AI — no clear discrimination patterns found.\n\nFree scan for every job seeker:\nbiaslens-justice.vercel.app`;
   }
-
-  if (navigator.share) {
-    navigator.share({ title: 'BiasLens Verdict', text });
-  } else {
-    navigator.clipboard.writeText(text).then(() => {
-      alert('Share text copied — paste it on LinkedIn, X, or Instagram caption.');
-    });
-  }
+  return `I scanned my job rejection with BiasLens. Inconclusive — need more evidence to determine bias.\n\nFree scan:\nbiaslens-justice.vercel.app`;
 }
 
-/* ─── Init ─── */
+/* ── Share via Gmail ── */
+function shareGmail() {
+  const text = buildShareText();
+  const subject = encodeURIComponent('BiasLens — My Employment Bias Scan Result');
+  const body    = encodeURIComponent(text);
+  window.open(`https://mail.google.com/mail/?view=cm&su=${subject}&body=${body}`, '_blank');
+}
+
+/* ── Share via Outlook ── */
+function shareOutlook() {
+  const text = buildShareText();
+  const subject = encodeURIComponent('BiasLens — My Employment Bias Scan Result');
+  const body    = encodeURIComponent(text);
+  window.open(`https://outlook.live.com/mail/0/deeplink/compose?subject=${subject}&body=${body}`, '_blank');
+}
+
+/* ── Copy text ── */
+function copyText(btn) {
+  navigator.clipboard.writeText(buildShareText()).then(() => {
+    const orig = btn.innerHTML;
+    btn.textContent = '✓ COPIED!';
+    setTimeout(() => { btn.innerHTML = orig; }, 2000);
+  });
+}
+
+/* ── Init ── */
 renderCard();
 </script>
 </body>
