@@ -54,31 +54,33 @@ async def privacy(request: Request):
 
 @app.post("/api/scan")
 async def scan_rejection(data: ScanRequest):
-    prompt = f"""You are BiasLens — an AI that identifies potential employment discrimination patterns.
+    prompt = f"""You are BiasLens — an AI that identifies potential employment discrimination patterns under US law.
 
-Analyze this situation for the US market:
+Analyze this rejection against US federal employment law standards (Title VII, ADEA, ADA, GINA).
+The rejection text may be written in any language — US employers sometimes communicate in other languages.
+Always respond in English regardless of the language of the rejection.
 
 Job title: {data.job_title}
-Text: {data.rejection_text}
+Rejection text: {data.rejection_text}
 
-Look for documented discrimination patterns under US law (Title VII, ADEA, ADA):
-- Age bias ("overqualified", "fresh perspective", "digital native", "culture fit")
-- Racial or ethnic bias indicators
-- Gender bias language
-- Disability discrimination signals
-- National origin indicators
+Look for documented discrimination patterns under US law:
+- Age bias (ADEA): "overqualified", "fresh perspective", "digital native", "culture fit", "energy", "long-term fit"
+- Sex/gender bias (Title VII): gendered language, assumptions about family obligations
+- Race/color/national origin bias (Title VII): accent comments, name-based screening signals
+- Disability bias (ADA): references to physical requirements beyond job necessity
+- Similar coded language in any language that maps to these US law categories
 
-IMPORTANT: Identify PATTERNS only — not legal verdicts.
-Be honest. If no clear pattern exists, say so. Do not manufacture findings.
+IMPORTANT: Analyze patterns only — not legal verdicts. This is for a US audience.
+Be honest. If no clear pattern exists under US law, say so. Do not manufacture findings.
 
-Return ONLY valid JSON:
+Return ONLY valid JSON with no extra text, no markdown, no code fences:
 {{
   "verdict": "patterns_found" or "no_clear_patterns" or "insufficient_information",
   "risk_level": "high" or "medium" or "low" or "none",
   "patterns_detected": ["pattern1", "pattern2"] or [],
   "key_phrase": "most suspicious phrase or null",
-  "explanation": "2-3 plain English sentences",
-  "next_step": "one specific actionable next step",
+  "explanation": "2-3 plain English sentences explaining what was found under US employment law",
+  "next_step": "one specific actionable next step referencing the relevant US law or agency",
   "eeoc_category": "race/color, sex, age, disability, national origin, religion, or none"
 }}"""
 
@@ -89,7 +91,13 @@ Return ONLY valid JSON:
     )
 
     raw = response.choices[0].message.content
+    # Robust JSON extraction — strip fences, find first { ... }
     clean = raw.replace("```json", "").replace("```", "").strip()
+    # Extract JSON object in case model adds preamble text
+    start = clean.find("{")
+    end   = clean.rfind("}") + 1
+    if start != -1 and end > start:
+        clean = clean[start:end]
     result = json.loads(clean)
 
     # Insert to Supabase via httpx (avoids SyncHttp issue)
@@ -143,17 +151,29 @@ async def stats():
         async with httpx.AsyncClient() as client:
             r1 = await client.get(
                 f"{SUPABASE_URL}/rest/v1/scans?select=id",
-                headers={**HEADERS, "Prefer": "count=exact"}
+                headers={**HEADERS, "Prefer": "count=exact"},
+                timeout=10.0
             )
+            # Use eq.patterns_found — only real flags count
             r2 = await client.get(
-                f"{SUPABASE_URL}/rest/v1/scans?select=id&verdict=neq.no_clear_patterns",
-                headers={**HEADERS, "Prefer": "count=exact"}
+                f"{SUPABASE_URL}/rest/v1/scans?select=id&verdict=eq.patterns_found",
+                headers={**HEADERS, "Prefer": "count=exact"},
+                timeout=10.0
             )
-            # Parse count from Content-Range header
-            cr1 = r1.headers.get("content-range", "0-0/0")
-            cr2 = r2.headers.get("content-range", "0-0/0")
-            total = int(cr1.split("/")[-1]) if "/" in cr1 else 0
-            flagged = int(cr2.split("/")[-1]) if "/" in cr2 else 0
+            def parse_count(resp):
+                cr = resp.headers.get("content-range", "")
+                if "/" in cr:
+                    try:
+                        return int(cr.split("/")[-1])
+                    except ValueError:
+                        pass
+                try:
+                    return len(resp.json())
+                except Exception:
+                    return 0
+
+            total   = parse_count(r1)
+            flagged = parse_count(r2)
     except Exception:
         pass
     return {"total_scans": total, "patterns_found": flagged}
