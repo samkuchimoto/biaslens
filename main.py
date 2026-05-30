@@ -44,6 +44,10 @@ async def home(request: Request):
 async def result(request: Request):
     return templates.TemplateResponse("result.html", {"request": request})
 
+@app.get("/verdict", response_class=HTMLResponse)
+async def verdict_page(request: Request):
+    return templates.TemplateResponse("verdict.html", {"request": request})
+
 @app.get("/privacy", response_class=HTMLResponse)
 async def privacy(request: Request):
     return templates.TemplateResponse("privacy.html", {"request": request})
